@@ -1,6 +1,7 @@
 #include "Bling.h"
 
 #include "Leds.h"
+#include <boost/process.hpp>
 #include <glm/gtx/matrix_transform_2d.hpp>
 
 BlingFxBase::~BlingFxBase() {}
@@ -21,6 +22,24 @@ glm::mat3 BlingFxBase::transform(float)
 }
 
 Bling::Bling(Image && image) : image_(std::move(image)) {}
+
+Bling::Bling(const std::string & text)
+{
+	namespace bp = boost::process;
+	using bp::child;
+	using bp::ipstream;
+	using bp::search_path;
+	using bp::std_out;
+
+	ipstream is;
+	child imagemagick(search_path("convert"), "-background", "black", "-fill", "white", "-font",
+	                  "/usr/share/fonts/TTF/Hack-Regular.ttf", "-pointsize", "30", "label:" + text,
+	                  "png:", std_out > is);
+
+	std::vector<uint8_t> pngdata{std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>()};
+
+	image_ = Image{pngdata};
+}
 
 static const auto & leds = Leds::leds_position();
 

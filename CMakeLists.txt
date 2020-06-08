@@ -18,6 +18,9 @@ find_package(sdbus-c++ REQUIRED)
 find_package(glm REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
 find_package(fmt REQUIRED)
+find_package(Boost REQUIRED filesystem)
+
+find_package(Threads REQUIRED)
 
 # add_custom_command(
 # 	OUTPUT  rogcore.h
@@ -36,7 +39,7 @@ add_executable(zephyrusbling
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(zephyrusbling SDBusCpp::sdbus-c++ Microsoft.GSL::GSL fmt::fmt)
+target_link_libraries(zephyrusbling SDBusCpp::sdbus-c++ Microsoft.GSL::GSL fmt::fmt Boost::boost Boost::filesystem Threads::Threads)
 target_compile_options(zephyrusbling PRIVATE -Wall -Wextra -pedantic -fdiagnostics-color=always -Werror)
 target_compile_options(zephyrusbling PRIVATE -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
 

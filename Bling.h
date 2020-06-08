@@ -80,6 +80,7 @@ class Bling
 
 public:
 	explicit Bling(Image && image);
+	explicit Bling(const std::string & text);
 
 	template <typename T>
 	T & add_effect()

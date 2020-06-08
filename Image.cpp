@@ -37,6 +37,24 @@ Image::Image(const std::string & filename)
 	stbi_image_free(data);
 }
 
+Image::Image(gsl::span<uint8_t> buffer)
+{
+	pixel * data =
+	        reinterpret_cast<pixel *>(stbi_load_from_memory(buffer.data(), buffer.size(), &w, &h, nullptr, 2));
+
+	if (!data)
+		throw std::runtime_error(std::string("Cannot load from memory: ") + stbi_failure_reason());
+
+	pixels.assign(data, data + w * h);
+
+	for (pixel & i: pixels)
+	{
+		i.grey = i.grey * i.alpha / 255;
+	}
+
+	stbi_image_free(data);
+}
+
 void Image::negate()
 {
 	for (pixel & i: pixels)

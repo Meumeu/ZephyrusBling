@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <gsl/span>
 #include <string>
 #include <vector>
 
@@ -13,13 +14,17 @@ struct pixel
 
 struct Image
 {
-	int w, h;
+	int w = 0, h = 0;
 	std::vector<pixel> pixels;
 
 	Image(const std::string & filename);
+	Image(gsl::span<uint8_t> data);
 
+	Image() = default;
 	Image(const Image &) = default;
 	Image(Image &&) = default;
+	Image & operator=(const Image &) = default;
+	Image & operator=(Image &&) = default;
 
 	void negate();
 
