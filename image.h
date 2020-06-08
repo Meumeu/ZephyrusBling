@@ -23,14 +23,14 @@ struct image
 
 	void negate();
 
-	pixel operator()(int x, int y);
+	pixel operator()(int x, int y) const;
 
-	pixel operator()(glm::vec2 position)
+	pixel operator()(glm::vec2 position) const
 	{
 		return operator()(position.x, position.y);
 	}
 
-	pixel operator()(glm::vec3 position)
+	pixel operator()(glm::vec3 position) const
 	{
 		return operator()(position.x, position.y);
 	}

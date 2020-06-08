@@ -28,6 +28,12 @@ image::image(const std::string & filename)
 		throw std::runtime_error("Cannot load " + filename + ": " + stbi_failure_reason());
 
 	pixels.assign(data, data + w * h);
+
+	for (pixel & i: pixels)
+	{
+		i.grey = i.grey * i.alpha / 255;
+	}
+
 	stbi_image_free(data);
 }
 
@@ -39,7 +45,7 @@ void image::negate()
 	}
 }
 
-pixel image::operator()(int x, int y)
+pixel image::operator()(int x, int y) const
 {
 	if (x < 0 || x >= w || y < 0 || y >= h)
 		return {0, 0};

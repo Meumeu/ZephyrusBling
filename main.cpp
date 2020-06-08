@@ -15,6 +15,36 @@ void sigint(int)
 	quit = true;
 }
 
+pixel sample_pixel(const image & img, glm::mat3 transform, glm::vec2 pos)
+{
+	// assume the color data is premultiplied
+	int sum_grey = 0;
+	int sum_alpha = 0;
+	int count = 0;
+
+	int steps = 4;
+
+	glm::vec2 x0 = pos + glm::vec2(transform * glm::vec3(0, -0.5, 0));
+	glm::vec2 du = glm::vec2(transform * glm::vec3(-0.5 / steps, 0.5 / steps, 0));
+	glm::vec2 dv = glm::vec2(transform * glm::vec3(+0.5 / steps, 0.5 / steps, 0));
+
+	for (int u = 0; u < steps; ++u)
+	{
+		for (int v = 0; v < steps; ++v)
+		{
+			pixel p = img(x0 + (float)u * du + (float)v * dv);
+
+			sum_grey += p.grey;
+			sum_alpha += p.alpha;
+			++count;
+		}
+	}
+
+	uint8_t grey = sum_grey / count;
+	uint8_t alpha = sum_alpha / count;
+	return pixel{grey, alpha};
+}
+
 int main(int argc, char ** argv)
 {
 	RogcoreProxy rogcore;
@@ -50,8 +80,11 @@ int main(int argc, char ** argv)
 				glm::mat3 transform =
 				        glm::scale(glm::mat3{1}, {scale / Leds::scale_x, scale / Leds::scale_y});
 
-				// translate 10 leds to the right
-				transform = glm::translate(glm::mat3{1}, {10, 0}) * transform;
+				// Get the width in LEDs
+				int img_width_in_led = img.w * scale / Leds::scale_x;
+
+				// align to the right
+				transform = glm::translate(glm::mat3{1}, {32 - img_width_in_led, 0}) * transform;
 
 				// transform from LED coordinates to image coordinates
 				transform = glm::inverse(transform);
@@ -63,7 +96,8 @@ int main(int argc, char ** argv)
 
 					glm::vec3 pos = transform * glm::vec3(leds[j].position, 1.0);
 
-					pixel p = img(pos);
+					pixel p = sample_pixel(img, transform, pos);
+
 					data[j] = p.grey * p.alpha / 255;
 				}
 
