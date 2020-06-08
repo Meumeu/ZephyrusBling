@@ -1,7 +1,38 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(zephyrusbling)
+project(zephyrusbling LANGUAGES C CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(zephyrusbling main.cpp)
+set(default_build_type Debug)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+	set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+		STRING "Choose the type of build." FORCE)
+
+	# Set the possible values of build type for cmake-gui
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+		"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+find_package(sdbus-c++ REQUIRED)
+find_package(glm REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
+find_package(fmt REQUIRED)
+
+# add_custom_command(
+# 	OUTPUT  rogcore.h
+# 	COMMAND sdbus-c++-xml2cpp ${CMAKE_CURRENT_SOURCE_DIR}/org.rogcore.Daemon.xml --proxy=${CMAKE_CURRENT_BINARY_DIR}/rogcore.h
+# 	DEPENDS org.rogcore.Daemon.xml
+# )
+
+
+add_executable(zephyrusbling main.cpp Leds.cpp image.cpp)
+
+set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)
+set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)
+
+target_link_libraries(zephyrusbling SDBusCpp::sdbus-c++ Microsoft.GSL::GSL fmt::fmt)
+target_compile_options(zephyrusbling PRIVATE -Wall -Wextra -pedantic -fdiagnostics-color=always -Werror)
+target_compile_options(zephyrusbling PRIVATE -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
 
 install(TARGETS zephyrusbling RUNTIME DESTINATION bin)
