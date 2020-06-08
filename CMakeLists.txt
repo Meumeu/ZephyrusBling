@@ -26,7 +26,12 @@ find_package(fmt REQUIRED)
 # )
 
 
-add_executable(zephyrusbling main.cpp Leds.cpp image.cpp)
+add_executable(zephyrusbling
+	main.cpp
+	Leds.cpp
+	Image.cpp
+	Bling.cpp
+	Effects.cpp)
 
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)

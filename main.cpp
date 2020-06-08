@@ -1,10 +1,9 @@
+#include "Bling.h"
+#include "Effects.h"
+#include "Image.h"
 #include "Leds.h"
 #include "RogcoreProxy.h"
-#include "image.h"
 #include <fmt/format.h>
-#include <glm/glm.hpp>
-#include <glm/gtx/matrix_transform_2d.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <signal.h>
 #include <unistd.h>
 
@@ -15,52 +14,17 @@ void sigint(int)
 	quit = true;
 }
 
-pixel sample_pixel(const image & img, glm::mat3 transform, glm::vec2 pos)
-{
-	// assume the color data is premultiplied
-	int sum_grey = 0;
-	int sum_alpha = 0;
-	int count = 0;
-
-	int steps = 4;
-
-	glm::vec2 x0 = pos + glm::vec2(transform * glm::vec3(0, -0.5, 0));
-	glm::vec2 du = glm::vec2(transform * glm::vec3(-0.5 / steps, 0.5 / steps, 0));
-	glm::vec2 dv = glm::vec2(transform * glm::vec3(+0.5 / steps, 0.5 / steps, 0));
-
-	for (int u = 0; u < steps; ++u)
-	{
-		for (int v = 0; v < steps; ++v)
-		{
-			pixel p = img(x0 + (float)u * du + (float)v * dv);
-
-			sum_grey += p.grey;
-			sum_alpha += p.alpha;
-			++count;
-		}
-	}
-
-	uint8_t grey = sum_grey / count;
-	uint8_t alpha = sum_alpha / count;
-	return pixel{grey, alpha};
-}
+// Text rendering: convert -background black -fill white -font /usr/share/fonts/TTF/Hack-Regular.ttf -pointsize 30
+// label:"hello world" helloworld.png
 
 int main(int argc, char ** argv)
 {
 	RogcoreProxy rogcore;
 
-	auto leds = Leds::leds_position();
-
-	std::vector<uint8_t> data(leds.size());
-
-	// leds size in cm
-	double physical_height = Leds::scale_y * 55;
-	double physical_width = Leds::scale_x * 33;
+	std::vector<uint8_t> data(Leds::leds_position().size());
 
 	signal(SIGINT, &sigint);
 	int return_value = 0;
-
-	fmt::print("LEDs: {} cm x {} cm\n", physical_width, physical_height);
 
 	while (!quit)
 	{
@@ -69,40 +33,48 @@ int main(int argc, char ** argv)
 			try
 			{
 				fmt::print("{}\n", argv[i]);
-
-				image img(argv[i]);
-
 				data.assign(data.size(), 0);
 
-				// scale image to LEDs position
-				double scale = std::min(physical_width / img.w, physical_height / img.h);
+				Bling blg{Image(argv[i])};
 
-				glm::mat3 transform =
-				        glm::scale(glm::mat3{1}, {scale / Leds::scale_x, scale / Leds::scale_y});
+				// 				blg.add_effect<Translate>({-5, -5});
+				//
+				// 				blg.add_effect<Rotate>()
+				// 					.add_keyframe(0, 0)
+				// 					.add_keyframe(2, 4 * 3.1415926);
+				//
+				// 				blg.add_effect<Scale>()
+				// 					.add_keyframe(0, {1, 1})
+				// 					.add_keyframe(0.5, {0.2, 0.2})
+				// 					.add_keyframe(1, {1, 0.2})
+				// 					.add_keyframe(1.5, {0.2, 1})
+				// 					.add_keyframe(2, {1, 1});
+				//
+				// 				blg.add_effect<Translate>({5, 5});
+				//
+				// 				blg.add_effect<Translate>()
+				// 					.add_keyframe(0, {0, 0})
+				// 					.add_keyframe(1, {20, 0})
+				// 					.add_keyframe(2, {0, 0});
 
-				// Get the width in LEDs
-				int img_width_in_led = img.w * scale / Leds::scale_x;
+				blg.add_effect<Translate>({-8, -8});
+				blg.add_effect<Scale>({0.5, 0.5});
+				blg.add_effect<Translate>({20, 10});
 
-				// align to the right
-				transform = glm::translate(glm::mat3{1}, {32 - img_width_in_led, 0}) * transform;
+				blg.add_effect<Translate>().add_keyframe(0, {0, 0}).add_keyframe(1, {0, -5});
 
-				// transform from LED coordinates to image coordinates
-				transform = glm::inverse(transform);
+				blg.add_effect<Alpha>().add_keyframe(0, 1).add_keyframe(1, 0);
 
-				for (size_t j = 0; j < leds.size(); ++j)
+				for (float t = 0; t < 1.5 && !quit; t += 0.01)
 				{
-					if (!leds[j].visible)
-						continue;
+					std::vector<pixel> buffer = blg.render(t);
+					size_t j = 0;
+					for (pixel p: buffer)
+						data[j++] = p.grey;
 
-					glm::vec3 pos = transform * glm::vec3(leds[j].position, 1.0);
-
-					pixel p = sample_pixel(img, transform, pos);
-
-					data[j] = p.grey * p.alpha / 255;
+					rogcore.AnimatrixWrite(data);
+					usleep(10000);
 				}
-
-				rogcore.AnimatrixWrite(data);
-				usleep(1000000);
 			}
 			catch (std::exception & e)
 			{
@@ -113,7 +85,7 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	data.assign(leds.size(), 0);
+	data.assign(data.size(), 0);
 	rogcore.AnimatrixWrite(data);
 	return return_value;
 }

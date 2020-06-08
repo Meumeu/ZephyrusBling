@@ -1,4 +1,4 @@
-#include "image.h"
+#include "Image.h"
 
 #include <stdexcept>
 
@@ -20,7 +20,7 @@
 //    // ... but 'n' will always be the number that it would have been if you said 0
 //    stbi_image_free(data)
 
-image::image(const std::string & filename)
+Image::Image(const std::string & filename)
 {
 	pixel * data = reinterpret_cast<pixel *>(stbi_load(filename.c_str(), &w, &h, nullptr, 2));
 
@@ -37,7 +37,7 @@ image::image(const std::string & filename)
 	stbi_image_free(data);
 }
 
-void image::negate()
+void Image::negate()
 {
 	for (pixel & i: pixels)
 	{
@@ -45,7 +45,7 @@ void image::negate()
 	}
 }
 
-pixel image::operator()(int x, int y) const
+pixel Image::operator()(int x, int y) const
 {
 	if (x < 0 || x >= w || y < 0 || y >= h)
 		return {0, 0};

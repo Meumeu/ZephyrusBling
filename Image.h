@@ -11,15 +11,15 @@ struct pixel
 	uint8_t alpha;
 };
 
-struct image
+struct Image
 {
 	int w, h;
 	std::vector<pixel> pixels;
 
-	image(const std::string & filename);
+	Image(const std::string & filename);
 
-	image(const image &) = default;
-	image(image &&) = default;
+	Image(const Image &) = default;
+	Image(Image &&) = default;
 
 	void negate();
 
