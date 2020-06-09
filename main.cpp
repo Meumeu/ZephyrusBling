@@ -1,4 +1,5 @@
 #include "Bling.h"
+#include "BlingDbus.h"
 #include "Effects.h"
 #include "Image.h"
 #include "Leds.h"
@@ -35,7 +36,8 @@ int main(int argc, char ** argv)
 				fmt::print("{}\n", argv[i]);
 				data.assign(data.size(), 0);
 
-				Bling blg{Image(argv[i])};
+				// 				Bling blg{Image(argv[i])};
+				Bling blg{argv[i]};
 
 				// 				blg.add_effect<Translate>({-5, -5});
 				//
@@ -57,11 +59,10 @@ int main(int argc, char ** argv)
 				// 					.add_keyframe(1, {20, 0})
 				// 					.add_keyframe(2, {0, 0});
 
-				blg.add_effect<Translate>({-8, -8});
-				blg.add_effect<Scale>({0.5, 0.5});
-				blg.add_effect<Translate>({20, 10});
+				blg.add_effect<Scale>({0.75, 0.75}).add_keyframe(1, {1, 1});
 
-				blg.add_effect<Translate>().add_keyframe(0, {0, 0}).add_keyframe(1, {0, -5});
+				// 				blg.add_effect<Translate>().add_keyframe(0, {0,
+				// 0}).add_keyframe(1, {0, -5});
 
 				blg.add_effect<Alpha>().add_keyframe(0, 1).add_keyframe(1, 0);
 
@@ -84,6 +85,13 @@ int main(int argc, char ** argv)
 			}
 		}
 	}
+
+	// Create D-Bus connection to the system bus and requests name on it.
+	auto connection = sdbus::createSystemBusConnection("org.meumeu.bling");
+	BlingDaemonAdaptor blinger(*connection);
+
+	// Run the loop on the connection.
+	connection->enterEventLoop();
 
 	data.assign(data.size(), 0);
 	rogcore.AnimatrixWrite(data);

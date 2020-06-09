@@ -1,6 +1,7 @@
 #include "Bling.h"
 
 #include "Leds.h"
+#include "print.h"
 #include <boost/process.hpp>
 #include <glm/gtx/matrix_transform_2d.hpp>
 
@@ -88,27 +89,39 @@ static std::vector<pixel> sample_pixels(const Image & img, glm::mat3 px_from_led
 }
 
 // leds size in cm
-double physical_height = Leds::scale_y * 55;
-double physical_width = Leds::scale_x * 33;
+double physical_height = []() {
+	float max_y = std::numeric_limits<float>::min();
+	float min_y = std::numeric_limits<float>::max();
+	for (const auto & i: Leds::leds_position())
+	{
+		min_y = std::min(min_y, i.position.y);
+		max_y = std::max(max_y, i.position.y);
+	}
+	return Leds::scale_y * (max_y - min_y + 1);
+}();
+
+double physical_width = []() {
+	float max_x = std::numeric_limits<float>::min();
+	float min_x = std::numeric_limits<float>::max();
+	for (const auto & i: Leds::leds_position())
+	{
+		min_x = std::min(min_x, i.position.x);
+		max_x = std::max(max_x, i.position.x);
+	}
+	return Leds::scale_x * (max_x - min_x + 1);
+}();
 
 std::vector<pixel> Bling::render(double t)
 {
-	// 	glm::mat3 transform(1.0f);
 	double brightness = 1;
 	double alpha = 1;
+
+	// center image on (0,0)
+	glm::mat3 center_image = glm::translate(glm::mat3{1}, {-0.5 * image_.w, -0.5 * image_.h});
 
 	// scale image pixel to centimeters
 	double scale = std::min(physical_width / image_.w, physical_height / image_.h);
 	glm::mat3 cm_from_px = glm::scale(glm::mat3{1}, {scale, scale});
-
-	// Image pixel to LED
-	glm::mat3 led_from_cm = glm::scale(glm::mat3{1}, {1 / Leds::scale_x, 1 / Leds::scale_y});
-
-	// 	// Get the width in number of LEDs
-	// 	int img_width_in_led = image_.w * scale / Leds::scale_x;
-	//
-	// 	// Align to the right
-	// 	transform = glm::translate(glm::mat3{1}, {32 - img_width_in_led, 0}) * transform;
 
 	glm::mat3 bling_transform_cm{1};
 	for (auto & i: effects_)
@@ -118,9 +131,20 @@ std::vector<pixel> Bling::render(double t)
 		alpha *= i->alpha(t);
 	}
 
-	// transform from LED coordinates to image coordinates
-	glm::mat3 led_from_px = led_from_cm * bling_transform_cm * cm_from_px;
+	// centimeters to LED
+	glm::mat3 led_from_cm = glm::scale(glm::mat3{1}, {1 / Leds::scale_x, 1 / Leds::scale_y});
 
+	glm::mat3 position_image_in_leds = glm::translate(glm::mat3{1}, {20, 20});
+
+	// combine all the transforms to get the transform from LED coordinates to image coordinates
+	glm::mat3 led_from_px = position_image_in_leds * led_from_cm * bling_transform_cm * cm_from_px * center_image;
+
+	// fmt::print("image size: {}x{}\n", image_.w, image_.h);
+	// fmt::print("led_from_px: {}\n", led_from_px);
+	// fmt::print("topleft: {}, btmright: {}\n", led_from_px * glm::vec3{0,0,1}, led_from_px *
+	// glm::vec3{image_.w-1,image_.h-1,1});
+
+	// use the inverse transform to sample the pixels
 	std::vector<pixel> buffer = sample_pixels(image_, glm::inverse(led_from_px));
 
 	brightness = std::max(brightness, 0.0);

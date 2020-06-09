@@ -22,18 +22,16 @@ find_package(Boost REQUIRED filesystem)
 
 find_package(Threads REQUIRED)
 
-# add_custom_command(
-# 	OUTPUT  rogcore.h
-# 	COMMAND sdbus-c++-xml2cpp ${CMAKE_CURRENT_SOURCE_DIR}/org.rogcore.Daemon.xml --proxy=${CMAKE_CURRENT_BINARY_DIR}/rogcore.h
-# 	DEPENDS org.rogcore.Daemon.xml
-# )
-
+# DBus adaptor / proxy created by:
+# sdbus-c++-xml2cpp dbus/org.meumeu.bling.xml --adaptor=dbus/OrgMeumeuBlingAdaptor.h --proxy=dbus/OrgMeumeuBlingProxy.h
+# sdbus-c++-xml2cpp dbus/org.rogcore.Daemon.xml --proxy=dbus/OrgRogcoreDaemonProxy.h
 
 add_executable(zephyrusbling
 	main.cpp
 	Leds.cpp
 	Image.cpp
 	Bling.cpp
+	BlingDbus.cpp
 	Effects.cpp)
 
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)

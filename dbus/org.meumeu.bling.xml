@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+	<interface name="org.meumeu.blingdaemon">
+		<method name="CreateImage">
+			<arg name="image" type="s" direction="in" />
+			<arg name="id" type="o" direction="out" />
+		</method>
+
+		<method name="CreateText">
+			<arg name="text" type="s" direction="in" />
+			<arg name="font" type="s" direction="in" />
+			<arg name="id" type="o" direction="out" />
+		</method>
+	</interface>
+
+	<interface name="org.meumeu.bling">
+		<method name="AddRotate">
+			<arg name="frames" type="a(dd)" direction="in" />
+		</method>
+
+		<method name="AddTranslate">
+			<arg name="frames" type="a(ddd)" direction="in" />
+		</method>
+
+		<method name="AddScale">
+			<arg name="frames" type="a(ddd)" direction="in" />
+		</method>
+
+		<method name="AddBrightness">
+			<arg name="frames" type="a(dd)" direction="in" />
+		</method>
+
+		<method name="AddAlpha">
+			<arg name="frames" type="a(dd)" direction="in" />
+		</method>
+
+		<method name="Show">
+			<arg name="duration" type="d" direction="in" />
+			<arg name="zorder" type="i" direction="in" />
+		</method>
+
+		<method name="Destroy">
+		</method>
+	</interface>
+</node>

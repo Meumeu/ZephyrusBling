@@ -1,8 +1,7 @@
 #pragma once
 
-#include "rogcore.h"
+#include "dbus/OrgRogcoreDaemonProxy.h"
 #include <gsl/span>
-#include <sdbus-c++/sdbus-c++.h>
 
 class RogcoreProxy : public sdbus::ProxyInterfaces<org::rogcore::Daemon_proxy>
 {
@@ -35,12 +34,10 @@ public:
 
 		std::vector<uint8_t> packet1(640, 0xff);
 		std::copy(std::begin(header1), std::end(header1), std::begin(packet1));
-		// 		std::copy(ptr, ptr + 627, &packet1[7]);
 		std::copy(data1.begin(), data1.end(), &packet1[7]);
 
 		std::vector<uint8_t> packet2(640, 0xff);
 		std::copy(std::begin(header2), std::end(header2), std::begin(packet2));
-		// 		std::copy(ptr + 627, ptr + 1245, &packet2[7]);
 		std::copy(data2.begin(), data2.end(), &packet2[7]);
 
 		AnimatrixWrite(packet1, packet2);
