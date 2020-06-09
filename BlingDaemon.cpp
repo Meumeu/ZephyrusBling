@@ -160,7 +160,7 @@ void BlingDaemon::update()
 	if (any_bling_visible)
 	{
 		// TODO: set a reasonable delay, or wait for rogcore to signal a frame is displayed
-		timer_.expires_after(100ms);
+		timer_.expires_after(20ms);
 
 		timer_.async_wait([this](const boost::system::error_code & ec) {
 			if (!ec)

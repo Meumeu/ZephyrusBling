@@ -15,8 +15,9 @@ class io_context;
 class BlingDaemonProxy : public sdbus::ProxyInterfaces<org::meumeu::blingdaemon_proxy>
 {
 public:
-	BlingDaemonProxy() :
-	        sdbus::ProxyInterfaces<org::meumeu::blingdaemon_proxy>("org.meumeu.bling", "/org/meumeu/blingdaemon")
+	BlingDaemonProxy(sdbus::IConnection & connection) :
+	        sdbus::ProxyInterfaces<org::meumeu::blingdaemon_proxy>(connection, "org.meumeu.bling",
+	                                                               "/org/meumeu/blingdaemon")
 	{
 		registerProxy();
 	}

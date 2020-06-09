@@ -1,104 +1,215 @@
-#include "Bling.h"
 #include "BlingDaemon.h"
-#include "Effects.h"
-#include "Image.h"
-#include "Leds.h"
-#include "RogcoreProxy.h"
+#include <CLI/CLI.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/signal_set.hpp>
+#include <boost/lexical_cast.hpp>
+#include <filesystem>
 #include <fmt/format.h>
-#include <signal.h>
-#include <unistd.h>
+#include <gsl/span>
+#include <gsl/span_ext>
+#include <iostream>
+
+void split_string(std::vector<std::string_view> & split, std::string_view s, char separator)
+{
+	split.clear();
+
+	size_t n;
+
+	while (true)
+	{
+		n = s.find_first_of(separator);
+		split.emplace_back(s.substr(0, n));
+
+		if (n == std::string_view::npos)
+			break;
+
+		s = s.substr(n + 1);
+	}
+}
+
+std::vector<sdbus::Struct<double, double>> vector_to_vector_of_tuple_2(gsl::span<std::string_view> values)
+{
+	std::vector<sdbus::Struct<double, double>> ret;
+	std::vector<std::string_view> split;
+
+	if (values.size() == 1)
+	{
+		split_string(split, values[0], ',');
+		if (split.size() != 1)
+			throw std::invalid_argument("Invalid argument");
+
+		ret.emplace_back(0, boost::lexical_cast<double>(split[0]));
+
+		return ret;
+	}
+
+	for (auto & i: values)
+	{
+		split_string(split, i, ',');
+		if (split.size() != 2)
+			throw std::invalid_argument("Invalid argument");
+
+		ret.emplace_back(boost::lexical_cast<double>(split[0]), boost::lexical_cast<double>(split[1]));
+	}
+
+	return ret;
+}
+
+std::vector<sdbus::Struct<double, double, double>> vector_to_vector_of_tuple_3(gsl::span<std::string_view> values)
+{
+	std::vector<sdbus::Struct<double, double, double>> ret;
+	std::vector<std::string_view> split;
+
+	if (values.size() == 1)
+	{
+		split_string(split, values[0], ',');
+		if (split.size() != 2)
+			throw std::invalid_argument("Invalid argument");
+
+		ret.emplace_back(0, boost::lexical_cast<double>(split[0]), boost::lexical_cast<double>(split[1]));
+
+		return ret;
+	}
+
+	for (auto & i: values)
+	{
+		split_string(split, i, ',');
+		if (split.size() != 3)
+			throw std::invalid_argument("Invalid argument");
+
+		ret.emplace_back(boost::lexical_cast<double>(split[0]), boost::lexical_cast<double>(split[1]),
+		                 boost::lexical_cast<double>(split[2]));
+	}
+
+	return ret;
+}
 
 int main(int argc, char ** argv)
 {
-	// 	RogcoreProxy rogcore;
-	//
-	// 	std::vector<uint8_t> data(Leds::leds_position().size());
-	//
-	// 	signal(SIGINT, &sigint);
-	// 	int return_value = 0;
-	//
-	// 	while (!quit)
-	// 	{
-	// 		for (int i = 1; i < argc; ++i)
-	// 		{
-	// 			try
-	// 			{
-	// 				fmt::print("{}\n", argv[i]);
-	// 				data.assign(data.size(), 0);
-	//
-	// 				// 				Bling blg{Image(argv[i])};
-	// 				Bling blg{argv[i]};
-	//
-	// 				// 				blg.add_effect<Translate>({-5, -5});
-	// 				//
-	// 				// 				blg.add_effect<Rotate>()
-	// 				// 					.add_keyframe(0, 0)
-	// 				// 					.add_keyframe(2, 4 * 3.1415926);
-	// 				//
-	// 				// 				blg.add_effect<Scale>()
-	// 				// 					.add_keyframe(0, {1, 1})
-	// 				// 					.add_keyframe(0.5, {0.2, 0.2})
-	// 				// 					.add_keyframe(1, {1, 0.2})
-	// 				// 					.add_keyframe(1.5, {0.2, 1})
-	// 				// 					.add_keyframe(2, {1, 1});
-	// 				//
-	// 				// 				blg.add_effect<Translate>({5, 5});
-	// 				//
-	// 				// 				blg.add_effect<Translate>()
-	// 				// 					.add_keyframe(0, {0, 0})
-	// 				// 					.add_keyframe(1, {20, 0})
-	// 				// 					.add_keyframe(2, {0, 0});
-	//
-	// 				blg.add_effect<Scale>({0.75, 0.75}).add_keyframe(1, {1, 1});
-	//
-	// 				// 				blg.add_effect<Translate>().add_keyframe(0, {0,
-	// 				// 0}).add_keyframe(1, {0, -5});
-	//
-	// 				blg.add_effect<Alpha>().add_keyframe(0, 1).add_keyframe(1, 0);
-	//
-	// 				for (float t = 0; t < 1.5 && !quit; t += 0.01)
-	// 				{
-	// 					std::vector<pixel> buffer = blg.render(t);
-	// 					size_t j = 0;
-	// 					for (pixel p: buffer)
-	// 						data[j++] = p.grey;
-	//
-	// 					rogcore.AnimatrixWrite(data);
-	// 					usleep(10000);
-	// 				}
-	// 			}
-	// 			catch (std::exception & e)
-	// 			{
-	// 				fmt::print(stderr, "{}\n", e.what());
-	// 				return_value = 1;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
+	bool daemon;
+	std::string image;
+	std::string text;
+	std::string font;
+	std::vector<std::string> fx;
+	double duration = 3;
+	int z_order = 0;
 
-	// Create boost::asio context
-	boost::asio::io_context io;
+	CLI::App app("description");
 
-	// Create D-Bus connection to the session bus and requests name on it.
-	std::unique_ptr<sdbus::IConnection> session_bus = sdbus::createSessionBusConnection("org.meumeu.bling");
+	app.add_flag("--daemon,-d", daemon);
+	app.add_option("--image", image, "Display an image");
+	app.add_option("--text", text, "Display a text");
+	app.add_option("--font", font);
+	app.add_option("--fx", fx);
+	app.add_option("--duration", duration, "Duration in seconds");
+	app.add_option("--z-order", z_order);
 
-	// Quit on SIGINT or SIGTERM
-	boost::asio::signal_set signals(io, SIGINT, SIGTERM);
-	signals.async_wait([&io, &session_bus](const boost::system::error_code & error, int signal_number) {
-		io.stop();
-		session_bus->leaveEventLoop();
-	});
+	CLI11_PARSE(app, argc, argv);
 
-	BlingDaemon daemon(io, *session_bus);
+	if (app.count("--daemon") + app.count("--text") + app.count("--image") != 1)
+	{
+		std::cerr << "Exactly one of --daemon, --image, --text is required\n";
+		return 1;
+	}
 
-	session_bus->enterEventLoopAsync();
-	io.run();
+	if (daemon)
+	{
+		// Create boost::asio context
+		boost::asio::io_context io;
 
-	daemon.clear();
+		// Create D-Bus connection to the session bus and requests name on it.
+		std::unique_ptr<sdbus::IConnection> session_bus = sdbus::createSessionBusConnection("org.meumeu.bling");
 
-	// 	data.assign(data.size(), 0);
-	// 	rogcore.AnimatrixWrite(data);
-	// 	return return_value;
+		// Quit on SIGINT or SIGTERM
+		boost::asio::signal_set signals(io, SIGINT, SIGTERM);
+		signals.async_wait([&io, &session_bus](const boost::system::error_code & error, int signal_number) {
+			io.stop();
+			session_bus->leaveEventLoop();
+		});
+
+		BlingDaemon daemon(io, *session_bus);
+
+		session_bus->enterEventLoopAsync();
+		io.run();
+
+		daemon.clear();
+
+		return 0;
+	}
+	else
+	{
+		sdbus::ObjectPath bling_path;
+		std::unique_ptr<sdbus::IConnection> session_bus;
+		std::unique_ptr<BlingDaemonProxy> daemon;
+
+		try
+		{
+			session_bus = sdbus::createSessionBusConnection();
+			daemon = std::make_unique<BlingDaemonProxy>(*session_bus);
+
+			if (app.count("--text"))
+			{
+				if (app.count("--font"))
+					bling_path = daemon->CreateText(text, font);
+				else
+					bling_path = daemon->CreateText(text, "");
+			}
+			else if (app.count("--image"))
+			{
+				bling_path = daemon->CreateImage(std::filesystem::absolute(image));
+			}
+			else
+			{
+				assert(false);
+			}
+
+			BlingProxy bling(*session_bus, bling_path);
+
+			std::vector<std::string_view> split;
+			for (std::string & i: fx)
+			{
+				split_string(split, i, ':');
+
+				assert(!split.empty());
+				std::string_view type = split.front();
+				gsl::span<std::string_view> data = gsl::make_span(split).subspan(1);
+
+				if (type == "translate")
+				{
+					bling.AddTranslate(vector_to_vector_of_tuple_3(data));
+				}
+				else if (type == "rotate")
+				{
+					bling.AddRotate(vector_to_vector_of_tuple_2(data));
+				}
+				else if (type == "scale")
+				{
+					bling.AddScale(vector_to_vector_of_tuple_3(data));
+				}
+				else if (type == "brightness")
+				{
+					bling.AddBrightness(vector_to_vector_of_tuple_2(data));
+				}
+				else if (type == "alpha")
+				{
+					bling.AddAlpha(vector_to_vector_of_tuple_2(data));
+				}
+				else
+					throw std::invalid_argument("Invalid effect: " + std::string(type));
+			}
+
+			daemon->Show(bling_path, duration, z_order);
+
+			fmt::print("Bling {} created\n", bling_path);
+		}
+		catch (std::exception & e)
+		{
+			fmt::print(stderr, "{}\n", e.what());
+
+			if (bling_path != "")
+				daemon->Destroy(bling_path);
+
+			return 1;
+		}
+	}
 }

@@ -15,7 +15,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 
-find_package(Boost REQUIRED filesystem)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(CLI11 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
@@ -40,6 +41,7 @@ set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(zephyrusbling
 	Boost::boost
 	Boost::filesystem
+	CLI11::CLI11
 	fmt::fmt
 	Microsoft.GSL::GSL
 	SDBusCpp::sdbus-c++

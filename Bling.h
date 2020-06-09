@@ -80,8 +80,8 @@ public:
 class BlingProxy : public sdbus::ProxyInterfaces<org::meumeu::bling_proxy>
 {
 public:
-	BlingProxy(std::string object_path) :
-	        sdbus::ProxyInterfaces<org::meumeu::bling_proxy>("org.meumeu.bling", std::move(object_path))
+	BlingProxy(sdbus::IConnection & connection, std::string object_path) :
+	        sdbus::ProxyInterfaces<org::meumeu::bling_proxy>(connection, "org.meumeu.bling", std::move(object_path))
 	{
 		registerProxy();
 	}
