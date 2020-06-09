@@ -34,7 +34,7 @@ void BlingDaemon::CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::s
 
 			it->second->id = id;
 
-			fmt::print("Created bling from image ({})\n", image);
+			fmt::print("Created bling {} from image ({})\n", id, image);
 			result.returnResults(id);
 		}
 		catch (std::exception & e)
@@ -63,7 +63,7 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 
 			it->second->id = id;
 
-			fmt::print("Created bling from text ({})\n", text);
+			fmt::print("Created bling {} from text ({})\n", id, text);
 			result.returnResults(id);
 		}
 		catch (std::exception & e)
@@ -81,9 +81,12 @@ void BlingDaemon::Show(const sdbus::ObjectPath & id, const double & duration, co
 
 		Bling & b = *blings_.at(id);
 		b.zorder = zorder;
-		b.duration = std::chrono::milliseconds{(int)(duration / 1000.0)};
+		b.duration = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+		        std::chrono::duration<double>(duration));
 		b.start_time = std::chrono::steady_clock::now();
 		b.visible = true;
+
+		fmt::print("Showing bling {} for {} s\n", id, std::chrono::duration<double>(b.duration).count());
 	}
 	catch (std::out_of_range & e)
 	{
@@ -107,6 +110,12 @@ void BlingDaemon::start_main_loop()
 	io_.post([this]() { update(); });
 }
 
+void BlingDaemon::clear()
+{
+	framebuffer.assign(Leds::leds_position().size(), 0);
+	rogcore.AnimatrixWrite(framebuffer);
+}
+
 using namespace std::chrono_literals;
 
 void BlingDaemon::update()
@@ -125,10 +134,11 @@ void BlingDaemon::update()
 			if (!i.second->visible)
 				continue;
 
-			auto t = i.second->start_time - now;
+			auto t = now - i.second->start_time;
 			if (t > i.second->duration)
 			{
 				// TODO: destroy it
+				i.second->visible = false;
 				continue;
 			}
 
@@ -149,8 +159,8 @@ void BlingDaemon::update()
 
 	if (any_bling_visible)
 	{
-		timer_.expires_after(
-		        100ms); // TODO: set a reasonable delay, or wait for rogcore to signal a frame is displayed
+		// TODO: set a reasonable delay, or wait for rogcore to signal a frame is displayed
+		timer_.expires_after(100ms);
 
 		timer_.async_wait([this](const boost::system::error_code & ec) {
 			if (!ec)

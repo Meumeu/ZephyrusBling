@@ -10,9 +10,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-// Text rendering: convert -background black -fill white -font /usr/share/fonts/TTF/Hack-Regular.ttf -pointsize 30
-// label:"hello world" helloworld.png
-
 int main(int argc, char ** argv)
 {
 	// 	RogcoreProxy rogcore;
@@ -98,6 +95,8 @@ int main(int argc, char ** argv)
 
 	session_bus->enterEventLoopAsync();
 	io.run();
+
+	daemon.clear();
 
 	// 	data.assign(data.size(), 0);
 	// 	rogcore.AnimatrixWrite(data);

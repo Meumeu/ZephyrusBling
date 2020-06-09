@@ -55,6 +55,8 @@ public:
 		unregisterAdaptor();
 	}
 
+	void clear();
+
 private:
 	void start_main_loop();
 	void update();
