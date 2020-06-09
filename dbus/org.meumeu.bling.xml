@@ -3,14 +3,26 @@
 <node>
 	<interface name="org.meumeu.blingdaemon">
 		<method name="CreateImage">
+			<annotation name="org.freedesktop.DBus.Method.Async" value="server" />
 			<arg name="image" type="s" direction="in" />
 			<arg name="id" type="o" direction="out" />
 		</method>
 
 		<method name="CreateText">
+			<annotation name="org.freedesktop.DBus.Method.Async" value="server" />
 			<arg name="text" type="s" direction="in" />
 			<arg name="font" type="s" direction="in" />
 			<arg name="id" type="o" direction="out" />
+		</method>
+
+		<method name="Show">
+			<arg name="id" type="o" direction="in" />
+			<arg name="duration" type="d" direction="in" />
+			<arg name="zorder" type="i" direction="in" />
+		</method>
+
+		<method name="Destroy">
+			<arg name="id" type="o" direction="in" />
 		</method>
 	</interface>
 
@@ -35,12 +47,5 @@
 			<arg name="frames" type="a(dd)" direction="in" />
 		</method>
 
-		<method name="Show">
-			<arg name="duration" type="d" direction="in" />
-			<arg name="zorder" type="i" direction="in" />
-		</method>
-
-		<method name="Destroy">
-		</method>
 	</interface>
 </node>

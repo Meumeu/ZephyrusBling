@@ -1,5 +1,6 @@
 #include "Bling.h"
 
+#include "Effects.h"
 #include "Leds.h"
 #include "print.h"
 #include <boost/process.hpp>
@@ -22,24 +23,47 @@ glm::mat3 BlingFxBase::transform(float)
 	return glm::mat3(1.0f);
 }
 
-Bling::Bling(Image && image) : image_(std::move(image)) {}
+Bling::Bling(sdbus::IConnection & connection, std::string object_path, Image && image) :
+        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, std::move(object_path)),
+        image_(std::move(image))
+{
+	registerAdaptor();
+}
 
-Bling::Bling(const std::string & text)
+Bling::Bling(sdbus::IConnection & connection, std::string object_path, const std::string & text,
+             const std::string & font) :
+        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, std::move(object_path))
 {
 	namespace bp = boost::process;
 	using bp::child;
 	using bp::ipstream;
 	using bp::search_path;
+	using bp::std_err;
 	using bp::std_out;
 
 	ipstream is;
-	child imagemagick(search_path("convert"), "-background", "black", "-fill", "white", "-font",
-	                  "/usr/share/fonts/TTF/Hack-Regular.ttf", "-pointsize", "30", "label:" + text,
-	                  "png:", std_out > is);
+	ipstream err;
+
+	child imagemagick(search_path("convert"), "-background", "transparent", "-fill", "white", "-font", font,
+	                  "-pointsize", "30", "label:" + text, "png:", std_out > is, std_err > err);
 
 	std::vector<uint8_t> pngdata{std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>()};
+	std::string error{std::istreambuf_iterator<char>(err), std::istreambuf_iterator<char>()};
+	imagemagick.join();
+
+	if (error != "")
+	{
+		throw std::runtime_error(fmt::format("Error rendering text: {}", error));
+	}
 
 	image_ = Image{pngdata};
+
+	registerAdaptor();
+}
+
+Bling::~Bling()
+{
+	unregisterAdaptor();
 }
 
 static const auto & leds = Leds::leds_position();
@@ -111,8 +135,10 @@ double physical_width = []() {
 	return Leds::scale_x * (max_x - min_x + 1);
 }();
 
-std::vector<pixel> Bling::render(double t)
+std::vector<pixel> Bling::render(std::chrono::steady_clock::duration dur) const
 {
+	double t = std::chrono::duration<double>(dur).count();
+
 	double brightness = 1;
 	double alpha = 1;
 
@@ -157,4 +183,38 @@ std::vector<pixel> Bling::render(double t)
 	}
 
 	return buffer;
+}
+
+namespace std
+{
+template <typename... Elements>
+struct tuple_size<::sdbus::Struct<Elements...>> : public integral_constant<std::size_t, sizeof...(Elements)>
+{};
+} // namespace std
+
+static_assert(std::tuple_size_v<const sdbus::Struct<double, double>> == 2);
+
+void Bling::AddRotate(const std::vector<sdbus::Struct<double, double>> & frames)
+{
+	auto & fx = add_effect<Rotate>(frames);
+}
+
+void Bling::AddTranslate(const std::vector<sdbus::Struct<double, double, double>> & frames)
+{
+	auto & fx = add_effect<Translate>(frames);
+}
+
+void Bling::AddScale(const std::vector<sdbus::Struct<double, double, double>> & frames)
+{
+	auto & fx = add_effect<Scale>(frames);
+}
+
+void Bling::AddBrightness(const std::vector<sdbus::Struct<double, double>> & frames)
+{
+	auto & fx = add_effect<Brightness>(frames);
+}
+
+void Bling::AddAlpha(const std::vector<sdbus::Struct<double, double>> & frames)
+{
+	auto & fx = add_effect<Alpha>(frames);
 }

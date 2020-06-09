@@ -14,30 +14,38 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-find_package(sdbus-c++ REQUIRED)
+
+find_package(Boost REQUIRED filesystem)
+find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
 find_package(Microsoft.GSL REQUIRED)
-find_package(fmt REQUIRED)
-find_package(Boost REQUIRED filesystem)
-
+find_package(sdbus-c++ REQUIRED)
 find_package(Threads REQUIRED)
 
 # DBus adaptor / proxy created by:
-# sdbus-c++-xml2cpp dbus/org.meumeu.bling.xml --adaptor=dbus/OrgMeumeuBlingAdaptor.h --proxy=dbus/OrgMeumeuBlingProxy.h
-# sdbus-c++-xml2cpp dbus/org.rogcore.Daemon.xml --proxy=dbus/OrgRogcoreDaemonProxy.h
+# sdbus-c++-xml2cpp dbus/org.meumeu.bling.xml --adaptor=dbus/OrgMeumeuBlingAdaptor.h --proxy=dbus/OrgMeumeuBlingProxy.h && clang-format -i dbus/OrgMeumeuBling*.h
+# sdbus-c++-xml2cpp dbus/org.rogcore.Daemon.xml --proxy=dbus/OrgRogcoreDaemonProxy.h && clang-format -i dbus/OrgRogcoreDaemonProxy.h
 
 add_executable(zephyrusbling
 	main.cpp
 	Leds.cpp
 	Image.cpp
 	Bling.cpp
-	BlingDbus.cpp
+	BlingDaemon.cpp
 	Effects.cpp)
 
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)
 set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(zephyrusbling SDBusCpp::sdbus-c++ Microsoft.GSL::GSL fmt::fmt Boost::boost Boost::filesystem Threads::Threads)
+target_link_libraries(zephyrusbling
+	Boost::boost
+	Boost::filesystem
+	fmt::fmt
+	Microsoft.GSL::GSL
+	SDBusCpp::sdbus-c++
+	Threads::Threads
+)
+
 target_compile_options(zephyrusbling PRIVATE -Wall -Wextra -pedantic -fdiagnostics-color=always -Werror)
 target_compile_options(zephyrusbling PRIVATE -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
 

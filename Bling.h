@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Image.h"
+#include "dbus/OrgMeumeuBlingAdaptor.h"
+#include "dbus/OrgMeumeuBlingProxy.h"
+#include <chrono>
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
@@ -49,6 +52,7 @@ protected:
 
 		for (size_t i = 1, n = keyframes_.size(); i < n; ++i)
 		{
+			assert(keyframes_[i - 1].t <= keyframes_[i].t);
 			assert(keyframes_[i - 1].t < t);
 
 			if (keyframes_[i].t < t)
@@ -63,40 +67,91 @@ protected:
 	}
 
 public:
-	BlingFx & add_keyframe(float t, parameter_type kf)
+	template <typename... Args>
+	BlingFx & add_keyframe(float t, Args &&... args)
 	{
-		keyframes_.emplace_back(KeyFrame<parameter_type>{t, kf});
+		keyframes_.emplace_back(KeyFrame<parameter_type>{t, parameter_type(std::forward<Args>(args)...)});
 		return *this;
 	}
 
 	~BlingFx() {}
 };
 
-class Bling
+class BlingProxy : public sdbus::ProxyInterfaces<org::meumeu::bling_proxy>
+{
+public:
+	BlingProxy(std::string object_path) :
+	        sdbus::ProxyInterfaces<org::meumeu::bling_proxy>("org.meumeu.bling", std::move(object_path))
+	{
+		registerProxy();
+	}
+
+	~BlingProxy()
+	{
+		unregisterProxy();
+	}
+};
+
+class Bling : public sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>
 {
 	std::vector<std::unique_ptr<BlingFxBase>> effects_;
 
 	Image image_;
 
 public:
-	explicit Bling(Image && image);
-	explicit Bling(const std::string & text);
+	std::chrono::steady_clock::time_point start_time;
+	std::chrono::steady_clock::duration duration;
+	int zorder;
+	std::string id;
+	bool visible = false;
+
+	Bling(sdbus::IConnection & connection, std::string object_path, Image && image);
+	Bling(sdbus::IConnection & connection, std::string object_path, const std::string & text,
+	      const std::string & font);
+	Bling(const Bling &) = delete;
+	Bling(Bling &&) = delete;
+	virtual ~Bling();
 
 	template <typename T>
 	T & add_effect()
 	{
-		effects_.emplace_back(std::make_unique<T>());
-		return static_cast<T &>(*effects_.back());
+		return static_cast<T &>(*effects_.emplace_back(std::make_unique<T>()));
 	}
 
 	template <typename T>
 	T & add_effect(typename T::parameter_type value)
 	{
-		effects_.emplace_back(std::make_unique<T>());
-		static_cast<T &>(*effects_.back()).add_keyframe(0, value);
+		auto & fx = add_effect<T>();
 
-		return static_cast<T &>(*effects_.back());
+		fx.add_keyframe(0, value);
+
+		return fx;
 	}
 
-	std::vector<pixel> render(double t);
+	template <typename T, typename U>
+	T & add_effect(std::vector<U> keyframes)
+	{
+		if (keyframes.empty())
+			throw std::invalid_argument("keyframes");
+
+		auto & fx = add_effect<T>();
+
+		std::sort(keyframes.begin(), keyframes.end());
+
+		for (const auto & i: keyframes)
+		{
+			std::apply([&fx](auto... args) { fx.add_keyframe(args...); }, i);
+		}
+
+		return fx;
+	}
+
+	std::vector<pixel> render(std::chrono::steady_clock::duration t) const;
+
+protected:
+	void AddRotate(const std::vector<sdbus::Struct<double, double>> & frames) override;
+	void AddTranslate(const std::vector<sdbus::Struct<double, double, double>> & frames) override;
+	void AddScale(const std::vector<sdbus::Struct<double, double, double>> & frames) override;
+	void AddBrightness(const std::vector<sdbus::Struct<double, double>> & frames) override;
+	void AddAlpha(const std::vector<sdbus::Struct<double, double>> & frames) override;
 };

@@ -26,21 +26,35 @@ protected:
 		        .onInterface(INTERFACE_NAME)
 		        .withInputParamNames("image")
 		        .withOutputParamNames("id")
-		        .implementedAs([this](const std::string & image) { return this->CreateImage(image); });
+		        .implementedAs([this](sdbus::Result<sdbus::ObjectPath> && result, std::string image) {
+			        this->CreateImage(std::move(result), std::move(image));
+		        });
 		object_.registerMethod("CreateText")
 		        .onInterface(INTERFACE_NAME)
 		        .withInputParamNames("text", "font")
 		        .withOutputParamNames("id")
-		        .implementedAs([this](const std::string & text, const std::string & font) {
-			        return this->CreateText(text, font);
-		        });
+		        .implementedAs(
+		                [this](sdbus::Result<sdbus::ObjectPath> && result, std::string text, std::string font) {
+			                this->CreateText(std::move(result), std::move(text), std::move(font));
+		                });
+		object_.registerMethod("Show")
+		        .onInterface(INTERFACE_NAME)
+		        .withInputParamNames("id", "duration", "zorder")
+		        .implementedAs([this](const sdbus::ObjectPath & id, const double & duration,
+		                              const int32_t & zorder) { return this->Show(id, duration, zorder); });
+		object_.registerMethod("Destroy")
+		        .onInterface(INTERFACE_NAME)
+		        .withInputParamNames("id")
+		        .implementedAs([this](const sdbus::ObjectPath & id) { return this->Destroy(id); });
 	}
 
 	~blingdaemon_adaptor() = default;
 
 private:
-	virtual sdbus::ObjectPath CreateImage(const std::string & image) = 0;
-	virtual sdbus::ObjectPath CreateText(const std::string & text, const std::string & font) = 0;
+	virtual void CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::string image) = 0;
+	virtual void CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::string text, std::string font) = 0;
+	virtual void Show(const sdbus::ObjectPath & id, const double & duration, const int32_t & zorder) = 0;
+	virtual void Destroy(const sdbus::ObjectPath & id) = 0;
 
 private:
 	sdbus::IObject & object_;
@@ -91,15 +105,6 @@ protected:
 		        .implementedAs([this](const std::vector<sdbus::Struct<double, double>> & frames) {
 			        return this->AddAlpha(frames);
 		        });
-		object_.registerMethod("Show")
-		        .onInterface(INTERFACE_NAME)
-		        .withInputParamNames("duration", "zorder")
-		        .implementedAs([this](const double & duration, const int32_t & zorder) {
-			        return this->Show(duration, zorder);
-		        });
-		object_.registerMethod("Destroy").onInterface(INTERFACE_NAME).implementedAs([this]() {
-			return this->Destroy();
-		});
 	}
 
 	~bling_adaptor() = default;
@@ -110,8 +115,6 @@ private:
 	virtual void AddScale(const std::vector<sdbus::Struct<double, double, double>> & frames) = 0;
 	virtual void AddBrightness(const std::vector<sdbus::Struct<double, double>> & frames) = 0;
 	virtual void AddAlpha(const std::vector<sdbus::Struct<double, double>> & frames) = 0;
-	virtual void Show(const double & duration, const int32_t & zorder) = 0;
-	virtual void Destroy() = 0;
 
 private:
 	sdbus::IObject & object_;

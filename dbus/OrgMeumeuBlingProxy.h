@@ -45,6 +45,16 @@ public:
 		return result;
 	}
 
+	void Show(const sdbus::ObjectPath & id, const double & duration, const int32_t & zorder)
+	{
+		proxy_.callMethod("Show").onInterface(INTERFACE_NAME).withArguments(id, duration, zorder);
+	}
+
+	void Destroy(const sdbus::ObjectPath & id)
+	{
+		proxy_.callMethod("Destroy").onInterface(INTERFACE_NAME).withArguments(id);
+	}
+
 private:
 	sdbus::IProxy & proxy_;
 };
@@ -90,16 +100,6 @@ public:
 	void AddAlpha(const std::vector<sdbus::Struct<double, double>> & frames)
 	{
 		proxy_.callMethod("AddAlpha").onInterface(INTERFACE_NAME).withArguments(frames);
-	}
-
-	void Show(const double & duration, const int32_t & zorder)
-	{
-		proxy_.callMethod("Show").onInterface(INTERFACE_NAME).withArguments(duration, zorder);
-	}
-
-	void Destroy()
-	{
-		proxy_.callMethod("Destroy").onInterface(INTERFACE_NAME);
 	}
 
 private:
