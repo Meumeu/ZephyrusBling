@@ -54,7 +54,7 @@ class BlingDaemon : public sdbus::AdaptorInterfaces<org::meumeu::blingdaemon_ada
 
 	std::vector<uint8_t> framebuffer;
 
-	std::unordered_map<std::string, std::unique_ptr<Bling>> blings_;
+	std::vector<std::unique_ptr<Bling>> blings_;
 	std::mutex blings_lock_;
 
 public:

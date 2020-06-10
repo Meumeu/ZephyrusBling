@@ -25,6 +25,8 @@
 #include <fmt/format.h>
 #include <thread>
 
+using namespace std::chrono_literals;
+
 namespace
 {
 std::string create_id()
@@ -43,14 +45,12 @@ void BlingDaemon::CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::s
 
 			auto bling = std::make_unique<Bling>(getObject().getConnection(), id, Image{image});
 
-			auto [it, inserted] = [this, &id, &bling]() {
+			{
 				std::scoped_lock<std::mutex> _(blings_lock_);
-				return blings_.emplace(id, std::move(bling));
-			}();
+				assert(bling->id == id);
+				blings_.emplace_back(std::move(bling));
+			}
 
-			assert(inserted);
-
-			fmt::print("Created bling {} from image ({})\n", id, image);
 			result.returnResults(id);
 		}
 		catch (std::exception & e)
@@ -71,14 +71,12 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 			        std::make_unique<Bling>(getObject().getConnection(), id, text,
 			                                font == "" ? "/usr/share/fonts/TTF/Hack-Regular.ttf" : font);
 
-			auto [it, inserted] = [this, &id, &bling]() {
+			{
 				std::scoped_lock<std::mutex> _(blings_lock_);
-				return blings_.emplace(id, std::move(bling));
-			}();
+				assert(bling->id == id);
+				blings_.emplace_back(std::move(bling));
+			}
 
-			assert(inserted);
-
-			fmt::print("Created bling {} from text ({})\n", id, text);
 			result.returnResults(id);
 		}
 		catch (std::exception & e)
@@ -90,32 +88,42 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 
 void BlingDaemon::Show(const sdbus::ObjectPath & id, const double & duration, const int32_t & zorder)
 {
-	try
+	std::scoped_lock<std::mutex> _(blings_lock_);
+
+	for(auto& i: blings_)
 	{
-		std::scoped_lock<std::mutex> _(blings_lock_);
+		if (i->id == id)
+		{
+			i->zorder = zorder;
+			i->duration = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+				std::chrono::duration<double>(duration));
+			i->start_time = std::chrono::steady_clock::now();
+			i->visible = true;
 
-		Bling & b = *blings_.at(id);
-		b.zorder = zorder;
-		b.duration = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-		        std::chrono::duration<double>(duration));
-		b.start_time = std::chrono::steady_clock::now();
-		b.visible = true;
+			std::stable_sort(blings_.begin(), blings_.end(), [](const auto & a, const auto & b)
+			{
+				return a->zorder < b->zorder;
+			});
 
-		fmt::print("Showing bling {} for {} s\n", id, std::chrono::duration<double>(b.duration).count());
+			io_.post([this]() { update(); });
+
+			return;
+		}
 	}
-	catch (std::out_of_range & e)
-	{
-		throw sdbus::Error("org.meumeu.bling.ShowError", e.what());
-	}
 
-	io_.post([this]() { update(); });
+	throw sdbus::Error("org.meumeu.bling.ShowError", "Bling " + id + " not found");
 }
 
 void BlingDaemon::Destroy(const sdbus::ObjectPath & id)
 {
 	std::scoped_lock<std::mutex> _(blings_lock_);
 
-	blings_.erase(id);
+	auto it = std::remove_if(blings_.begin(), blings_.end(), [&id](const auto& bling){ return id == bling->id; });
+
+	if (it == blings_.end())
+		throw sdbus::Error("org.meumeu.bling.DestroyError", "Bling " + id + " not found");
+
+	blings_.erase(it, blings_.end());
 
 	io_.post([this]() { update(); });
 }
@@ -131,8 +139,6 @@ void BlingDaemon::clear()
 	rogcore.AnimatrixWrite(framebuffer);
 }
 
-using namespace std::chrono_literals;
-
 void BlingDaemon::update()
 {
 	bool any_bling_visible = false;
@@ -141,25 +147,23 @@ void BlingDaemon::update()
 	// Display all blings
 	framebuffer.assign(Leds::leds_position().size(), 0);
 
-	// TODO: sort by z order
 	{
 		std::scoped_lock<std::mutex> _(blings_lock_);
+
 		for (const auto & i: blings_)
 		{
-			if (!i.second->visible)
+			if (!i->visible)
 				continue;
 
-			auto t = now - i.second->start_time;
-			if (t > i.second->duration)
+			auto t = now - i->start_time;
+			if (t > i->duration)
 			{
-				// TODO: destroy it
-				i.second->visible = false;
 				continue;
 			}
 
 			any_bling_visible = true;
 
-			std::vector<pixel> buffer = i.second->render(t);
+			std::vector<pixel> buffer = i->render(t);
 
 			size_t j = 0;
 			for (pixel p: buffer)
@@ -168,6 +172,9 @@ void BlingDaemon::update()
 				++j;
 			}
 		}
+
+		auto it = std::remove_if(blings_.begin(), blings_.end(), [now](const auto& i){ return i->visible && now > i->start_time + i->duration; });
+		blings_.erase(it, blings_.end());
 	}
 
 	rogcore.AnimatrixWrite(framebuffer);

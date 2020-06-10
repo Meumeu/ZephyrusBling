@@ -42,16 +42,16 @@ glm::mat3 BlingFxBase::transform(float)
 }
 
 Bling::Bling(sdbus::IConnection & connection, std::string object_path, Image && image) :
-        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, std::move(object_path)),
+        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, object_path),
         image_(std::move(image)),
-        id(object_path)
+        id(std::move(object_path))
 {
 	registerAdaptor();
 }
 
 Bling::Bling(sdbus::IConnection & connection, std::string object_path, const std::string & text,
              const std::string & font) :
-        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, std::move(object_path)), id(object_path)
+        sdbus::AdaptorInterfaces<org::meumeu::bling_adaptor>(connection, object_path), id(std::move(object_path))
 {
 	namespace bp = boost::process;
 	using bp::child;
