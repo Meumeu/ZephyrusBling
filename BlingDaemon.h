@@ -50,7 +50,6 @@ class BlingDaemon : public sdbus::AdaptorInterfaces<org::meumeu::blingdaemon_ada
 {
 	boost::asio::io_context & io_;
 	boost::asio::steady_timer timer_;
-	sdbus::IConnection & connection_;
 	RogcoreProxy rogcore;
 
 	std::vector<uint8_t> framebuffer;
@@ -62,8 +61,7 @@ public:
 	BlingDaemon(boost::asio::io_context & io, sdbus::IConnection & connection) :
 	        sdbus::AdaptorInterfaces<org::meumeu::blingdaemon_adaptor>(connection, "/org/meumeu/blingdaemon"),
 	        io_(io),
-	        timer_(io_),
-	        connection_(connection)
+	        timer_(io_)
 	{
 		registerAdaptor();
 		start_main_loop();

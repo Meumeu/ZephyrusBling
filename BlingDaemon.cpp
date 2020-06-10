@@ -41,7 +41,7 @@ void BlingDaemon::CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::s
 		{
 			std::string id = create_id();
 
-			auto bling = std::make_unique<Bling>(connection_, id, Image{image});
+			auto bling = std::make_unique<Bling>(getObject().getConnection(), id, Image{image});
 
 			auto [it, inserted] = [this, &id, &bling]() {
 				std::scoped_lock<std::mutex> _(blings_lock_);
@@ -49,8 +49,6 @@ void BlingDaemon::CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::s
 			}();
 
 			assert(inserted);
-
-			it->second->id = id;
 
 			fmt::print("Created bling {} from image ({})\n", id, image);
 			result.returnResults(id);
@@ -69,8 +67,9 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 		{
 			std::string id = create_id();
 
-			auto bling = std::make_unique<Bling>(
-			        connection_, id, text, font == "" ? "/usr/share/fonts/TTF/Hack-Regular.ttf" : font);
+			auto bling =
+			        std::make_unique<Bling>(getObject().getConnection(), id, text,
+			                                font == "" ? "/usr/share/fonts/TTF/Hack-Regular.ttf" : font);
 
 			auto [it, inserted] = [this, &id, &bling]() {
 				std::scoped_lock<std::mutex> _(blings_lock_);
@@ -78,8 +77,6 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 			}();
 
 			assert(inserted);
-
-			it->second->id = id;
 
 			fmt::print("Created bling {} from text ({})\n", id, text);
 			result.returnResults(id);

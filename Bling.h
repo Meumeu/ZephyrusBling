@@ -120,7 +120,7 @@ public:
 	std::chrono::steady_clock::time_point start_time;
 	std::chrono::steady_clock::duration duration;
 	int zorder;
-	std::string id;
+	const std::string id;
 	bool visible = false;
 
 	Bling(sdbus::IConnection & connection, std::string object_path, Image && image);

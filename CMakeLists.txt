@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(zephyrusbling LANGUAGES C CXX)
+project(zephyrusbling LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(default_build_type Debug)
@@ -29,28 +29,42 @@ find_package(Threads REQUIRED)
 # qdbus --system org.rogcore.Daemon /org/rogcore/Daemon org.freedesktop.DBus.Introspectable.Introspect > ../dbus/org.rogcore.Daemon.xml
 # sdbus-c++-xml2cpp dbus/org.rogcore.Daemon.xml --proxy=dbus/OrgRogcoreDaemonProxy.h && clang-format -i dbus/OrgRogcoreDaemonProxy.h
 
-add_executable(zephyrusbling
-	main.cpp
-	Leds.cpp
-	Image.cpp
-	Bling.cpp
-	BlingDaemon.cpp
-	Effects.cpp)
+# Common options to the service and the client
+add_library(zephyrusbling_common INTERFACE)
+target_compile_features(zephyrusbling_common INTERFACE cxx_std_17)
+target_compile_options(zephyrusbling_common INTERFACE -Wall -Wextra -pedantic -fdiagnostics-color=always -Werror)
+target_compile_options(zephyrusbling_common INTERFACE -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
 
-set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD 17)
-set_property(TARGET zephyrusbling PROPERTY CXX_STANDARD_REQUIRED ON)
+target_compile_options(zephyrusbling_common INTERFACE -fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fno-omit-frame-pointer)
+target_compile_options(zephyrusbling_common INTERFACE -fsanitize=leak)
+# target_compile_options(zephyrusbling_common INTERFACE -fsanitize=thread)
+target_compile_options(zephyrusbling_common INTERFACE -fsanitize=undefined)
+target_compile_options(zephyrusbling_common INTERFACE -fsanitize-address-use-after-scope)
 
-target_link_libraries(zephyrusbling
+target_link_options(zephyrusbling_common INTERFACE -fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fno-omit-frame-pointer)
+target_link_options(zephyrusbling_common INTERFACE -fsanitize=leak)
+# target_link_options(zephyrusbling_common INTERFACE -fsanitize=thread)
+target_link_options(zephyrusbling_common INTERFACE -fsanitize=undefined)
+target_link_options(zephyrusbling_common INTERFACE -fsanitize-address-use-after-scope)
+
+target_link_libraries(zephyrusbling_common INTERFACE
 	Boost::boost
-	Boost::filesystem
-	CLI11::CLI11
 	fmt::fmt
 	Microsoft.GSL::GSL
 	SDBusCpp::sdbus-c++
 	Threads::Threads
 )
 
-target_compile_options(zephyrusbling PRIVATE -Wall -Wextra -pedantic -fdiagnostics-color=always -Werror)
-target_compile_options(zephyrusbling PRIVATE -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable)
+add_executable(zephyrusblingd
+	zephyrusblingd.cpp
+	Leds.cpp
+	Image.cpp
+	Bling.cpp
+	BlingDaemon.cpp
+	Effects.cpp)
+target_link_libraries(zephyrusblingd zephyrusbling_common Boost::filesystem)
+install(TARGETS zephyrusblingd RUNTIME DESTINATION bin)
 
+add_executable(zephyrusbling zephyrusbling.cpp)
+target_link_libraries(zephyrusbling zephyrusbling_common CLI11::CLI11)
 install(TARGETS zephyrusbling RUNTIME DESTINATION bin)
