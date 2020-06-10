@@ -9,7 +9,7 @@ ASUS ROG Zephyrus G14 laptop using [rog-core](https://github.com/flukejones/rog-
 
 - [X] Displaying images
 - [X] Text rendering (with ImageMagick)
-- [X] Animations with linear transforms (rotations, traslations and scaling only) and adjusting image brightness
+- [X] Animations with linear transforms (rotations, translations and scaling only) and adjusting image brightness
 - [ ] Aligning the text with grid for sharp letters
 - [ ] Displaying desktop notifications
 - [ ] Displaying battery status
