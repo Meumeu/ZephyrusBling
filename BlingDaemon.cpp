@@ -90,20 +90,18 @@ void BlingDaemon::Show(const sdbus::ObjectPath & id, const double & duration, co
 {
 	std::scoped_lock<std::mutex> _(blings_lock_);
 
-	for(auto& i: blings_)
+	for (auto & i: blings_)
 	{
 		if (i->id == id)
 		{
 			i->zorder = zorder;
 			i->duration = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-				std::chrono::duration<double>(duration));
+			        std::chrono::duration<double>(duration));
 			i->start_time = std::chrono::steady_clock::now();
 			i->visible = true;
 
-			std::stable_sort(blings_.begin(), blings_.end(), [](const auto & a, const auto & b)
-			{
-				return a->zorder < b->zorder;
-			});
+			std::stable_sort(blings_.begin(), blings_.end(),
+			                 [](const auto & a, const auto & b) { return a->zorder < b->zorder; });
 
 			io_.post([this]() { update(); });
 
@@ -118,7 +116,7 @@ void BlingDaemon::Destroy(const sdbus::ObjectPath & id)
 {
 	std::scoped_lock<std::mutex> _(blings_lock_);
 
-	auto it = std::remove_if(blings_.begin(), blings_.end(), [&id](const auto& bling){ return id == bling->id; });
+	auto it = std::remove_if(blings_.begin(), blings_.end(), [&id](const auto & bling) { return id == bling->id; });
 
 	if (it == blings_.end())
 		throw sdbus::Error("org.meumeu.bling.DestroyError", "Bling " + id + " not found");
@@ -173,7 +171,9 @@ void BlingDaemon::update()
 			}
 		}
 
-		auto it = std::remove_if(blings_.begin(), blings_.end(), [now](const auto& i){ return i->visible && now > i->start_time + i->duration; });
+		auto it = std::remove_if(blings_.begin(), blings_.end(), [now](const auto & i) {
+			return i->visible && now > i->start_time + i->duration;
+		});
 		blings_.erase(it, blings_.end());
 	}
 
@@ -181,7 +181,7 @@ void BlingDaemon::update()
 
 	if (any_bling_visible)
 	{
-		// TODO: set a reasonable delay, or wait for rogcore to signal a frame is displayed
+		// TODO: set a reasonable delay, or wait for asusd to signal a frame is displayed
 		timer_.expires_after(20ms);
 
 		timer_.async_wait([this](const boost::system::error_code & ec) {

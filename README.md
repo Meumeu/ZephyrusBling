@@ -50,7 +50,7 @@ In another terminal, display an image or some text:
 ```
 ./zephyrusbling --text "Hello world" --fx translate:0,20,0:3,-25,0
 ./zephyrusbling --image ../tux.png --fx scale:0.8,0.8 --fx rotate:0,0:3,19 --fx translate:0,-20,0:3,20,0
-./zephyrusbling --image ../tux.png --duration 5 --fx alpha:3,0:3.5,1:5,0 --fxscale:3,0.4,0.4:5,1,1 --fx translate:3,0,0:5,5,0
+./zephyrusbling --image ../tux.png --duration 5 --fx alpha:3,0:3.5,1:5,0 --fx scale:3,0.4,0.4:5,1,1 --fx translate:3,0,0:5,5,0
 ```
 
 By default, the text or image disappears after 3 seconds, use the `--duration`
