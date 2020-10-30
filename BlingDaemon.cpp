@@ -136,7 +136,7 @@ void BlingDaemon::start_main_loop()
 void BlingDaemon::clear()
 {
 	framebuffer.assign(Leds::leds_position().size(), 0);
-	rogcore.AnimatrixWrite(framebuffer);
+	asuslinux.AnimatrixWrite(framebuffer);
 }
 
 void BlingDaemon::update()
@@ -177,7 +177,7 @@ void BlingDaemon::update()
 		blings_.erase(it, blings_.end());
 	}
 
-	rogcore.AnimatrixWrite(framebuffer);
+	asuslinux.AnimatrixWrite(framebuffer);
 
 	if (any_bling_visible)
 	{

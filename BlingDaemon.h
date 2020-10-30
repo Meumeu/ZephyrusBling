@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "AsuslinuxProxy.h"
 #include "Bling.h"
 #include "RogcoreProxy.h"
 #include "dbus/OrgMeumeuBlingAdaptor.h"
@@ -51,6 +52,7 @@ class BlingDaemon : public sdbus::AdaptorInterfaces<org::meumeu::blingdaemon_ada
 	boost::asio::io_context & io_;
 	boost::asio::steady_timer timer_;
 	RogcoreProxy rogcore;
+	AsuslinuxProxy asuslinux;
 
 	std::vector<uint8_t> framebuffer;
 
