@@ -1,7 +1,7 @@
 # ZephyrusBling
 
 ZephyrusBling is a utility that can display text and images on the back of the
-ASUS ROG Zephyrus G14 laptop using [rog-core](https://github.com/flukejones/rog-core).
+ASUS ROG Zephyrus G14 laptop using [asus-nb-ctrl](https://gitlab.com/asus-linux/asus-nb-ctrl).
 
 ![](example.gif)
 
@@ -33,13 +33,12 @@ cd build
 cmake .. --build
 ```
 
-[rog-core](https://github.com/flukejones/rog-core) should also be running to actually
-send the images to the LEDs, I have [patched](https://github.com/Meumeu/rog-core/tree/animatrix-smooth)
-it to get smoother animations but the basic functionalities work with the upstream version.
+[asus-nb-ctrl](https://gitlab.com/asus-linux/asus-nb-ctrl) should also be running to actually
+send the images to the LEDs.
 
 ## How to use
 
-This assumes the rog-core service is started and you have the correct permissions.
+This assumes the asusd service is started and you have the correct permissions.
 
 From the build directory, start the DBus service:
 ```
