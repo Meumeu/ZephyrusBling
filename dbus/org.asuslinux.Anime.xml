@@ -1,13 +1,30 @@
 
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-<node name="/org/asuslinux/Anime">
-  <interface name="org.asuslinux.Daemon">
-    <method name="SetAnime">
-      <arg name="input" type="aay" direction="in"/>
-    </method>
-    <method name="SetOnOff">
-      <arg name="status" type="b" direction="in"/>
-    </method>
-  </interface>
+<node>
+    <interface name="org.asuslinux.Daemon">
+        <!--
+        Writes a 34x56 image
+        -->
+        <method name="WriteImage">
+            <arg name="input" type="aay" direction="in"/>
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
+        </method>
+        <!--
+        Writes a data stream of length
+        -->
+        <method name="WriteDirect">
+            <arg name="input" type="ay" direction="in"/>
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
+        </method>
+        <method name="SetOnOff">
+            <arg name="status" type="b" direction="in"/>
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
+        </method>
+        <method name="SetBootOnOff">
+            <arg name="status" type="b" direction="in"/>
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
+        </method>
+    </interface>
 </node>
+

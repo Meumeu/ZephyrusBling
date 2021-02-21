@@ -26,8 +26,8 @@ find_package(Threads REQUIRED)
 # DBus adaptor / proxy created by:
 # sdbus-c++-xml2cpp dbus/org.meumeu.bling.xml --adaptor=dbus/OrgMeumeuBlingAdaptor.h --proxy=dbus/OrgMeumeuBlingProxy.h && clang-format -i dbus/OrgMeumeuBling*.h
 #
-# qdbus --system org.rogcore.Daemon /org/rogcore/Daemon org.freedesktop.DBus.Introspectable.Introspect > ../dbus/org.rogcore.Daemon.xml
-# sdbus-c++-xml2cpp dbus/org.rogcore.Daemon.xml --proxy=dbus/OrgRogcoreDaemonProxy.h && clang-format -i dbus/OrgRogcoreDaemonProxy.h
+# qdbus --system org.asuslinux.Daemon /org/asuslinux/Anime org.freedesktop.DBus.Introspectable.Introspect > dbus/org.asuslinux.Anime.xml
+# sdbus-c++-xml2cpp dbus/org.asuslinux.Anime.xml --proxy=dbus/OrgAsuslinuxDaemonProxy.h && clang-format -i dbus/OrgAsuslinuxDaemonProxy.h
 
 # Common options to the service and the client
 add_library(zephyrusbling_common STATIC
