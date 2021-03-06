@@ -30,7 +30,8 @@ In ArchLinux, these are in the following packages: `boost`, `cli11` (from AUR), 
 ```
 mkdir build
 cd build
-cmake .. --build
+cmake ..
+cmake --build . -j 10
 ```
 
 [asus-nb-ctrl](https://gitlab.com/asus-linux/asus-nb-ctrl) should also be running to actually
