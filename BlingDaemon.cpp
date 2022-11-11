@@ -55,7 +55,7 @@ void BlingDaemon::CreateImage(sdbus::Result<sdbus::ObjectPath> && result, std::s
 		}
 		catch (std::exception & e)
 		{
-			result.returnError({"org.meumeu.bling.CreateImageError", e.what()});
+			result.returnError(sdbus::Error{"org.meumeu.bling.CreateImageError", e.what()});
 		}
 	}).detach();
 }
@@ -81,7 +81,7 @@ void BlingDaemon::CreateText(sdbus::Result<sdbus::ObjectPath> && result, std::st
 		}
 		catch (std::exception & e)
 		{
-			result.returnError({"org.meumeu.bling.CreateTextError", e.what()});
+			result.returnError(sdbus::Error{"org.meumeu.bling.CreateTextError", e.what()});
 		}
 	}).detach();
 }
