@@ -29,6 +29,13 @@ find_package(Threads REQUIRED)
 # qdbus --system org.asuslinux.Daemon /org/asuslinux/Anime org.freedesktop.DBus.Introspectable.Introspect > dbus/org.asuslinux.Anime.xml
 # sdbus-c++-xml2cpp dbus/org.asuslinux.Anime.xml --proxy=dbus/OrgAsuslinuxDaemonProxy.h && clang-format -i dbus/OrgAsuslinuxDaemonProxy.h
 
+add_custom_command(OUTPUT dbus/OrgAsuslinuxDaemonProxy.h
+	COMMAND mkdir -p dbus
+	COMMAND sdbus-c++-xml2cpp ${CMAKE_CURRENT_SOURCE_DIR}/dbus/org.asuslinux.Anime.xml --proxy=dbus/OrgAsuslinuxDaemonProxy.h
+	MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/dbus/org.asuslinux.Anime.xml)
+
+add_custom_target(dbus_proxy DEPENDS dbus/OrgAsuslinuxDaemonProxy.h)
+
 # Common options to the service and the client
 add_library(zephyrusbling_common STATIC
 	Leds.cpp
@@ -37,6 +44,8 @@ add_library(zephyrusbling_common STATIC
 	BlingDaemon.cpp
 	Effects.cpp
 )
+add_dependencies(zephyrusbling_common dbus_proxy)
+
 # Include ${CMAKE_CURRENT_LIST_DIR}/../ to make CMake generate zephyrusbling/<header>.h imports for external project
 # instead of just <header>.h
 target_include_directories(zephyrusbling_common PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../")
@@ -63,6 +72,7 @@ target_link_libraries(zephyrusbling_common
 	SDBusCpp::sdbus-c++
 	Threads::Threads
 )
+target_include_directories(zephyrusbling_common PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(zephyrusblingd
 	zephyrusblingd.cpp

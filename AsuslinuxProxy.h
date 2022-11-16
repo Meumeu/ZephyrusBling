@@ -27,6 +27,12 @@ class AsuslinuxProxy : public sdbus::ProxyInterfaces<org::asuslinux::Daemon_prox
 	static constexpr char objectPath[] = "/org/asuslinux/Anime";
 
 public:
+	enum AnimeType
+	{
+		GA401,
+		GA402,
+	};
+
 	AsuslinuxProxy() : sdbus::ProxyInterfaces<org::asuslinux::Daemon_proxy>(destination, objectPath)
 	{
 		registerProxy();
@@ -37,14 +43,16 @@ public:
 		unregisterProxy();
 	}
 
-	using org::asuslinux::Daemon_proxy::WriteDirect;
+	using org::asuslinux::Daemon_proxy::Write;
 
-	void AnimatrixWrite(gsl::span<uint8_t> data)
+	void AnimatrixWrite(gsl::span<uint8_t> data, AnimeType type = GA401)
 	{
 		assert(data.size() == 1245);
 
 		std::vector<uint8_t> packet(1254, 0x00);
 		std::copy(data.begin(), data.end(), packet.begin());
-		WriteDirect(packet);
+		Write({packet, type});
 	}
+
+	virtual void onNotifyPowerStates(const sdbus::Struct<uint8_t, bool, bool> & data) override{};
 };

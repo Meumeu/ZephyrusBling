@@ -2,29 +2,88 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-    <interface name="org.asuslinux.Daemon">
-        <!--
-        Writes a 34x56 image
-        -->
-        <method name="WriteImage">
-            <arg name="input" type="aay" direction="in"/>
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
-        </method>
-        <!--
-        Writes a data stream of length
-        -->
-        <method name="WriteDirect">
-            <arg name="input" type="ay" direction="in"/>
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
-        </method>
-        <method name="SetOnOff">
-            <arg name="status" type="b" direction="in"/>
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
-        </method>
-        <method name="SetBootOnOff">
-            <arg name="status" type="b" direction="in"/>
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true" />
-        </method>
-    </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.asuslinux.Daemon">
+    <!--
+     Writes a data stream of length. Will force system thread to exit until it is restarted
+     -->
+    <method name="Write">
+      <arg name="input" type="(ayu)" direction="in"/>
+    </method>
+    <!--
+     Set the global AniMe brightness
+     -->
+    <method name="SetBrightness">
+      <arg name="bright" type="d" direction="in"/>
+    </method>
+    <!--
+     Set whether the AniMe is displaying images/data
+     -->
+    <method name="SetOnOff">
+      <arg name="status" type="b" direction="in"/>
+    </method>
+    <!--
+     Set whether the AniMe will show boot, suspend, or off animations
+     -->
+    <method name="SetBootOnOff">
+      <arg name="on" type="b" direction="in"/>
+    </method>
+    <!--
+     The main loop is the base system set action if the user isn't running
+     the user daemon
+     -->
+    <method name="RunMainLoop">
+      <arg name="start" type="b" direction="in"/>
+    </method>
+    <!--
+     Notify listeners of the status of AniMe LED power and factory system-status animations
+     -->
+    <signal name="NotifyPowerStates">
+      <arg name="data" type="(ybb)"/>
+    </signal>
+    <!--
+     Get status of if the AniMe LEDs are on/displaying while system is awake
+     -->
+    <property name="AwakeEnabled" type="b" access="read"/>
+    <!--
+     Get the status of if factory system-status animations are enabled
+     -->
+    <property name="BootEnabled" type="b" access="read"/>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
 </node>
 
